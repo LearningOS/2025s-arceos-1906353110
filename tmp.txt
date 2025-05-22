@@ -5,7 +5,7 @@ Has Hello, Arceos!
 print_with_color pass
     [92;1mCreating[0m FAT32 disk image "disk.img" ...
 mkfs.fat 4.2 (2021-01-31)
-ramfs_rename fault
+ramfs_rename pass
     [92;1mCreating[0m FAT32 disk image "disk.img" ...
 mkfs.fat 4.2 (2021-01-31)
 alt_alloc pass
@@ -17,6 +17,7 @@ mkfs.fat 4.2 (2021-01-31)
 make[1]: Entering directory '/home/yake/my2025/2025s-arceos-1906353110/arceos/payload'
 make -C origin
 make[2]: Entering directory '/home/yake/my2025/2025s-arceos-1906353110/arceos/payload/origin'
+make[2]: Nothing to be done for 'all'.
 make[2]: Leaving directory '/home/yake/my2025/2025s-arceos-1906353110/arceos/payload/origin'
 make -C hello_c
 make[2]: Entering directory '/home/yake/my2025/2025s-arceos-1906353110/arceos/payload/hello_c'
@@ -32,6 +33,7 @@ make[2]: Nothing to be done for 'all'.
 make[2]: Leaving directory '/home/yake/my2025/2025s-arceos-1906353110/arceos/payload/mapfile_c'
 make -C skernel
 make[2]: Entering directory '/home/yake/my2025/2025s-arceos-1906353110/arceos/payload/skernel'
+make[2]: Nothing to be done for 'all'.
 make[2]: Leaving directory '/home/yake/my2025/2025s-arceos-1906353110/arceos/payload/skernel'
 make -C skernel2
 make[2]: Entering directory '/home/yake/my2025/2025s-arceos-1906353110/arceos/payload/skernel2'
@@ -67,5 +69,5 @@ make[2]: Entering directory '/home/yake/my2025/2025s-arceos-1906353110/arceos/pa
 make[2]: Leaving directory '/home/yake/my2025/2025s-arceos-1906353110/arceos/payload/skernel2'
 make[1]: Leaving directory '/home/yake/my2025/2025s-arceos-1906353110/arceos/payload'
 Write file 'payload/skernel2/skernel2' into disk.img
-simple_hv default
-400
+simple_hv pass
+600

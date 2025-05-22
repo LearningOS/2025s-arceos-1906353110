@@ -1,7 +1,7 @@
 use alloc::collections::BTreeMap;
 use alloc::sync::{Arc, Weak};
 use alloc::{string::String, vec::Vec};
-
+use alloc::string::ToString;
 use axfs_vfs::{VfsDirEntry, VfsNodeAttr, VfsNodeOps, VfsNodeRef, VfsNodeType};
 use axfs_vfs::{VfsError, VfsResult};
 use spin::RwLock;
@@ -164,6 +164,26 @@ impl VfsNodeOps for DirNode {
             self.remove_node(name)
         }
     }
+
+    fn rename(&self, old_path: &str, new_path: &str) -> VfsResult {
+
+        let self_arc = self.this.upgrade().unwrap();
+
+        let (old_name,_) = split_path(old_path);
+        // let new =new_path.rsplitn(2, '/').next().unwrap_or("");
+        // let old = (new_path.rsplitn(2, '/').rev().collect::<Vec<_>>().join("/") + old_name).into();
+
+        // 提取最后一个组件
+        let new = new_path.rsplitn(2, '/').next().unwrap_or("");
+
+        let old_node = self_arc.clone().lookup(old_name)?;
+
+        self.children.write().remove(old_name);
+        self.children.write().insert(new.to_string(),old_node);
+
+        Ok(())
+    }
+
 
     axfs_vfs::impl_vfs_dir_default! {}
 }
