@@ -1,13 +1,16 @@
 #![allow(dead_code)]
 
+use alloc::vec;
 use core::ffi::{c_void, c_char, c_int};
 use axhal::arch::TrapFrame;
 use axhal::trap::{register_trap_handler, SYSCALL};
 use axerrno::LinuxError;
+use memory_addr::{AddrRange, MemoryAddr, VirtAddr, PAGE_SIZE_4K};
 use axtask::current;
 use axtask::TaskExtRef;
 use axhal::paging::MappingFlags;
 use arceos_posix_api as api;
+use axhal::mem::phys_to_virt;
 
 const SYS_IOCTL: usize = 29;
 const SYS_OPENAT: usize = 56;
@@ -140,7 +143,51 @@ fn sys_mmap(
     fd: i32,
     _offset: isize,
 ) -> isize {
-    unimplemented!("no sys_mmap!");
+
+    let aligned_size = ((length + PAGE_SIZE_4K - 1) / PAGE_SIZE_4K) * PAGE_SIZE_4K;
+
+    let mut buf = vec![0u8; aligned_size];
+    let nread = sys_read(fd, buf.as_mut_ptr() as *mut c_void, aligned_size);
+    if nread < 0 {
+        return nread;
+    }
+    let current = axtask::current();
+    let mut uspace = current.task_ext().aspace.lock();
+
+    // 3. 计算查找 hint 和 limit
+    let user_limit = AddrRange::new(
+        uspace.base(),
+        uspace.end(),
+    );
+    let hint = VirtAddr::from_usize(0x0000_0000_1000_0000).align_up_4k();
+
+    // 4. 查找空闲区域
+    let start = match uspace.find_free_area(hint, aligned_size, user_limit) {
+        Some(addr) => addr.align_down_4k(),
+        None => return -12,
+    };
+
+    if uspace
+        .map_alloc(start, aligned_size, MappingFlags::READ | MappingFlags::USER, true)
+        .is_err()
+    {
+        return -12;
+    }
+
+    let (paddr, _, _) = match uspace.page_table().query(start) {
+        Ok(v) => v,
+        Err(_) => return -14,
+    };
+
+    unsafe {
+        core::ptr::copy_nonoverlapping(
+            buf.as_ptr(),
+            phys_to_virt(paddr).as_mut_ptr(),
+            nread as usize,
+        );
+    }
+
+    start.as_usize() as isize
 }
 
 fn sys_openat(dfd: c_int, fname: *const c_char, flags: c_int, mode: api::ctypes::mode_t) -> isize {
